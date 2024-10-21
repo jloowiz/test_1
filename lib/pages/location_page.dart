@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:test_1/models/Jeepney.dart';
 import 'package:test_1/models/location.dart';
@@ -18,7 +19,7 @@ class LocationPage extends StatefulWidget {
 
 class _LocationPageState extends State<LocationPage>{
   final GlobalKey<ScaffoldState> _ScreenKey = GlobalKey<ScaffoldState>();
-  final mapController = MapController();
+  final MapController mapController = MapController();
   final mapControl.MapController routeControl = mapControl.MapController();
   LocationModel? currentLocation;
   bool isMapReady = false;
@@ -121,7 +122,7 @@ class _LocationPageState extends State<LocationPage>{
                 children: [
                   const BarIndicator(),
                   JeepneyDropdown(jeepneys: jeepneys),
-                  const StartSearch(),
+                  StartSearch(onPressed:getCurrentLocation),
                   const EndSearch(),
                 ],
               ),
@@ -132,20 +133,30 @@ class _LocationPageState extends State<LocationPage>{
                   body: Stack(
                     children: [
                       FlutterMap(
-                        mapController: MapController(),
+                        mapController: mapController,
                         options: MapOptions(
                             initialCenter: const LatLng(15.143226, 120.592531),
                             initialZoom: 12.44,
                             minZoom: 5.0,
                             maxZoom: 23,
                             onMapReady: (){
-                              mapController.mapEventStream.listen((evt) {});
+                              setState(() {
+                                isMapReady = true;
+                              });
+                              _moveToCurrentLocation();
                             }
                         ),
                         children: [
                           TileLayer(
                             urlTemplate: 'https://api.mapbox.com/styles/v1/kctiru/cm2c3cdhl009l01poc7xihjc7/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1Ijoia2N0aXJ1IiwiYSI6ImNtMmVhaGxnczBzMmMya3NiZTNmYmc0NGsifQ.X4OpU9Ajb6UvH4DOPneHig',
                             maxNativeZoom: 22,
+                          ),
+                          LocationMarkerLayer(
+                              position: LocationMarkerPosition(
+                                  latitude: currentLocation?.latitude ?? 0.0,
+                                  longitude: currentLocation?.longitude ?? 0.0,
+                                  accuracy: 10.0
+                              )
                           ),
                         ],
                       ),
@@ -162,7 +173,9 @@ class _LocationPageState extends State<LocationPage>{
 }
 
 class StartSearch extends StatelessWidget {
-  const StartSearch({super.key});
+  final VoidCallback onPressed; // Accept the onPressed callback
+
+  const StartSearch({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -171,23 +184,9 @@ class StartSearch extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
       ),
-      child:
-      TextField(
-        decoration: InputDecoration(
-          labelText: 'Start Location',
-          labelStyle: TextStyle(color: const Color.fromARGB(179, 255, 255, 255)),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.white70),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.white),
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
+      child: TextButton(
+        onPressed: onPressed,
+        child: const Text('Start Location'),
       ),
     );
   }
