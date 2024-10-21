@@ -3,7 +3,9 @@ import 'package:test_1/models/Jeepney.dart';
 
 class JeepneyDropdown extends StatefulWidget {
   final List<Jeepney> jeepneys;
-  const JeepneyDropdown({required this.jeepneys, super.key});
+  final Function(Jeepney?) onSelected;  // Add the onSelected callback
+
+  const JeepneyDropdown({required this.jeepneys, required this.onSelected, super.key});
 
   @override
   _JeepneyDropdownState createState() => _JeepneyDropdownState();
@@ -21,7 +23,7 @@ class _JeepneyDropdownState extends State<JeepneyDropdown> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: DropdownButtonFormField<String>(
-        dropdownColor: Color.fromARGB(255, 0, 1, 85),  // Background color of the dropdown
+        dropdownColor: const Color.fromARGB(255, 0, 1, 85),  // Background color of the dropdown
         value: _selectedJeepneyName,
         onChanged: (value) {
           setState(() {
@@ -30,6 +32,7 @@ class _JeepneyDropdownState extends State<JeepneyDropdown> {
                   (jeepney) => jeepney.jeepneyName == value,
             );
           });
+          widget.onSelected(_selectedJeepney);  // Call onSelected when a jeepney is selected
         },
         items: widget.jeepneys.map((jeepney) {
           return DropdownMenuItem<String>(
