@@ -2,15 +2,101 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:test_1/models/Jeepney.dart';
+import 'package:test_1/models/location.dart';
+import 'package:test_1/models/Destination.dart';
+import 'package:test_1/models/BarIndicator.dart';
+import 'package:test_1/controllers/mapController.dart' as mapControl;
+import 'package:test_1/controllers/dropdownController.dart';
 
-class LocationPage extends StatelessWidget {
+class LocationPage extends StatefulWidget {
+  const LocationPage({super.key});
 
+  @override
+  State<LocationPage> createState() => _LocationPageState();
+}
+
+class _LocationPageState extends State<LocationPage>{
   final GlobalKey<ScaffoldState> _ScreenKey = GlobalKey<ScaffoldState>();
+  final mapController = MapController();
+  final mapControl.MapController routeControl = mapControl.MapController();
+  LocationModel? currentLocation;
+  bool isMapReady = false;
+  bool isLocationFetched = false;
+  List<LatLng> routePoints = [];
   final List<Jeepney> jeepneys = [
     Jeepney("Balibago - Dau Terminal", 20.0, [LatLng(14.6132, 121.0228)]), // Add more waypoints
     Jeepney("Dau Terminal - SM Clark", 20.0, [LatLng(14.6047, 121.0176)]),
   ];
-  final mapController = MapController();
+
+  void _showLocationServiceDialog(String title, String message){
+    showDialog(
+        context: context,
+        builder: (context) =>
+            AlertDialog(
+              title: Text(title),
+              content: Text(message),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                )
+              ],
+            )
+    );
+  }
+
+  void getCurrentLocation() async {
+    try {
+      LocationModel location = await routeControl.getCurrentLocation();
+
+      setState(() {
+        currentLocation = location;
+        isLocationFetched = true;
+      });
+
+      _moveToCurrentLocation();
+    } catch (error) {
+      _showLocationServiceDialog('Error', error.toString());
+    }
+  }
+
+  void _moveToCurrentLocation() {
+    if (isMapReady && isLocationFetched && currentLocation != null) {
+      mapController.move(
+        LatLng(currentLocation!.latitude, currentLocation!.longitude),
+        18.0,
+      );
+    }
+  }
+
+  void handleSearchSelect(Destination selectedDestination) async {
+    if (currentLocation == null) {
+      _showLocationServiceDialog('Current Location Not Found',
+          'Please fetch your current location first.');
+      return;
+    }
+
+    mapController.move(
+      LatLng(selectedDestination.latitude, selectedDestination.longitude),
+      18.0,
+    );
+
+    try {
+      final route = await routeControl.fetchRoute(
+        LatLng(currentLocation!.latitude, currentLocation!.longitude),
+        LatLng(selectedDestination.latitude, selectedDestination.longitude),
+      );
+
+      setState(() {
+        routePoints = route;
+      });
+    } catch (error) {
+      _showLocationServiceDialog(
+          'Error', 'Could not fetch route. Please try again.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,8 +134,8 @@ class LocationPage extends StatelessWidget {
                       FlutterMap(
                         mapController: MapController(),
                         options: MapOptions(
-                            initialCenter: const LatLng(15.132505, 120.589862),
-                            initialZoom: 18.0,
+                            initialCenter: const LatLng(15.143226, 120.592531),
+                            initialZoom: 12.44,
                             minZoom: 5.0,
                             maxZoom: 23,
                             onMapReady: (){
@@ -58,7 +144,7 @@ class LocationPage extends StatelessWidget {
                         ),
                         children: [
                           TileLayer(
-                            urlTemplate: 'https://api.mapbox.com/styles/v1/kctiru/cm0y5kdd501fx01pqbuglh9zu/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1Ijoia2N0aXJ1IiwiYSI6ImNtMHdoeGI5ZDAyNXUyc3ExN2JscW9ieTAifQ.wu7uC5TxznmmslF5u37wzw',
+                            urlTemplate: 'https://api.mapbox.com/styles/v1/kctiru/cm2c3cdhl009l01poc7xihjc7/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1Ijoia2N0aXJ1IiwiYSI6ImNtMmVhaGxnczBzMmMya3NiZTNmYmc0NGsifQ.X4OpU9Ajb6UvH4DOPneHig',
                             maxNativeZoom: 22,
                           ),
                         ],
@@ -75,84 +161,6 @@ class LocationPage extends StatelessWidget {
   }
 }
 
-class BarIndicator extends StatelessWidget {
-  const BarIndicator({super.key,});
-  @override
-  Widget build(BuildContext context){
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Container(
-        width: 40,
-        height: 5,
-        decoration: const BoxDecoration(
-            color: Colors.white60,
-            borderRadius: BorderRadius.all(Radius.circular(20))
-        ),
-      ),
-    );
-  }
-}
-
-class Jeepney {
-  final String jeepneyName;
-  final double fare;
-  final List<LatLng> polyline;
-
-  Jeepney(this.jeepneyName, this.fare, this.polyline);
-}
-
-class JeepneyDropdown extends StatefulWidget {
-  final List<Jeepney> jeepneys;
-  const JeepneyDropdown({required this.jeepneys, super.key});
-  @override
-  _JeepneyDropdownState createState() => _JeepneyDropdownState();
-}
-
-class _JeepneyDropdownState extends State<JeepneyDropdown> {
-  String? _selectedJeepneyName;
-  Jeepney? _selectedJeepney;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      child: DropdownButtonFormField<String>(
-        value: _selectedJeepneyName,
-        onChanged: (value) {
-          setState(() {
-            _selectedJeepneyName = value;
-            _selectedJeepney = widget.jeepneys.firstWhere(
-                    (jeepney) => jeepney.jeepneyName == value);
-          });
-        },
-        items: widget.jeepneys.map((jeepney) {
-          return DropdownMenuItem<String>(
-            value: jeepney.jeepneyName,
-            child: Text(
-              jeepney.jeepneyName,
-              style: TextStyle(color: Colors.white),
-            ),
-          );
-        }).toList(),
-        decoration: InputDecoration(
-          labelText: 'Select Jeepney',
-          labelStyle: TextStyle(color: const Color.fromARGB(179, 255, 255, 255)),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.white70),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.white),
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class StartSearch extends StatelessWidget {
   const StartSearch({super.key});
 
@@ -160,7 +168,11 @@ class StartSearch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      child: TextField(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child:
+      TextField(
         decoration: InputDecoration(
           labelText: 'Start Location',
           labelStyle: TextStyle(color: const Color.fromARGB(179, 255, 255, 255)),
