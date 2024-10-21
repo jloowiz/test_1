@@ -173,7 +173,7 @@ class _LocationPageState extends State<LocationPage>{
 }
 
 class StartSearch extends StatelessWidget {
-  final VoidCallback onPressed; // Accept the onPressed callback
+  final VoidCallback onPressed;
 
   const StartSearch({super.key, required this.onPressed});
 
