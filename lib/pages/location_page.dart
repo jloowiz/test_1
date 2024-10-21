@@ -109,13 +109,13 @@ class _LocationPageState extends State<LocationPage>{
             maxHeight: 300,
             color: Colors.transparent,
             panel: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [const Color.fromARGB(255, 0, 1, 85)!, Colors.black],
+                  colors: [Color.fromARGB(255, 0, 1, 85), Colors.black],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
-                borderRadius: const BorderRadius.only(topLeft:Radius.circular(24),topRight:Radius.circular(24)),
+                borderRadius: BorderRadius.only(topLeft:Radius.circular(24),topRight:Radius.circular(24)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,

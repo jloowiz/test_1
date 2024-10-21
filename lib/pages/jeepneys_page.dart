@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:test_1/pages/maps/jeep_map.dart';
 
 class JeepneysPage extends StatefulWidget {
   const JeepneysPage({super.key});
@@ -17,6 +18,7 @@ class _JeepneysPageState extends State<JeepneysPage> {
       'terminal': 'Astro Terminal',
       'fare': 10.0,
       'image': 'assets/images/purple_jeepney.png',
+      'mapUrl': 'https://api.mapbox.com/styles/v1/kctiru/cm2hzhwp500ke01po5xal4ajg/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1Ijoia2N0aXJ1IiwiYSI6ImNtMmVhaGxnczBzMmMya3NiZTNmYmc0NGsifQ.X4OpU9Ajb6UvH4DOPneHig',
       'isExpanded': false,
     },
     {
@@ -25,6 +27,7 @@ class _JeepneysPageState extends State<JeepneysPage> {
       'terminal': 'Villa Pampang Terminal',
       'fare': 12.0,
       'image': 'assets/images/yellow_jeepney.png',
+      'mapUrl' : 'https://api.mapbox.com/styles/v1/kctiru/cm2iolxi800mh01po85al34l7/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1Ijoia2N0aXJ1IiwiYSI6ImNtMmVhaGxnczBzMmMya3NiZTNmYmc0NGsifQ.X4OpU9Ajb6UvH4DOPneHig',
       'isExpanded': false,
     },
     {
@@ -33,6 +36,7 @@ class _JeepneysPageState extends State<JeepneysPage> {
       'terminal': 'Marisol Terminal',
       'fare': 11.0,
       'image': 'assets/images/green_jeepney.png',
+      'mapUrl': 'https://api.mapbox.com/styles/v1/kctiru/cm2hzi2dn003x01pl13lu1xv5/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1Ijoia2N0aXJ1IiwiYSI6ImNtMmVhaGxnczBzMmMya3NiZTNmYmc0NGsifQ.X4OpU9Ajb6UvH4DOPneHig',
       'isExpanded': false,
     },
     {
@@ -41,6 +45,7 @@ class _JeepneysPageState extends State<JeepneysPage> {
       'terminal': 'Main Gate Terminal',
       'fare': 13.0,
       'image': 'assets/images/brown_jeepney.png',
+      'mapUrl' : 'https://api.mapbox.com/styles/v1/kctiru/cm2ip3uad006801py86eygnoe/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1Ijoia2N0aXJ1IiwiYSI6ImNtMmVhaGxnczBzMmMya3NiZTNmYmc0NGsifQ.X4OpU9Ajb6UvH4DOPneHig',
       'isExpanded': false,
     },
   ];
@@ -49,6 +54,15 @@ class _JeepneysPageState extends State<JeepneysPage> {
     setState(() {
       jeepneys[index]['isExpanded'] = !jeepneys[index]['isExpanded'];
     });
+  }
+
+  void _showRoute(String mapUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => JeepneyMapPage(mapUrl: mapUrl), // Pass the map URL
+      ),
+    );
   }
 
   double _calculateFare(double fare) {
@@ -246,6 +260,17 @@ class _JeepneysPageState extends State<JeepneysPage> {
                                   color: Colors.black,
                                 ),
                               ),
+                              TextButton(
+                                  onPressed: () => _showRoute(jeepney['mapUrl']),
+                                  child: const Text(
+                                    'Show Route',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                  ),
+                              )
                             ],
                           ),
                         ),
