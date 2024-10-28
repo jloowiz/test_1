@@ -24,6 +24,7 @@ class _LocationPageState extends State<LocationPage> {
   final mapControl.MapController routeControl = mapControl.MapController();
   final JeepMap jeepMap = JeepMap();
   LocationModel? currentLocation;
+  LatLng? terminalLocation;
   bool isMapReady = false;
   bool isLocationFetched = false;
   List<LatLng> routePoints = [];
@@ -33,11 +34,20 @@ class _LocationPageState extends State<LocationPage> {
     if (selectedJeepney != null) {
       setState(() {
         mapUrl = selectedJeepney.mapUrl;
+        // Set the terminal location to the waypoint defined in the Jeepney object
+        terminalLocation = selectedJeepney.waypoints.isNotEmpty
+            ? selectedJeepney.waypoints.first
+            : null;
+        routePoints.clear();
       });
+
+      if (currentLocation != null && terminalLocation != null) {
+        _createRouteToTerminal();
+      }
     }
   }
 
-    void _showLocationServiceDialog(String title, String message){
+  void _showLocationServiceDialog(String title, String message){
     showDialog(
         context: context,
         builder: (context) =>
@@ -52,6 +62,23 @@ class _LocationPageState extends State<LocationPage> {
               ],
             )
     );
+  }
+
+  void _createRouteToTerminal() async {
+    if (currentLocation == null || terminalLocation == null) return;
+
+    try {
+      final route = await routeControl.fetchRoute(
+        LatLng(currentLocation!.latitude, currentLocation!.longitude),
+        terminalLocation!,
+      );
+
+      setState(() {
+        routePoints = route;
+      });
+    } catch (error) {
+      _showLocationServiceDialog('Error', 'Could not fetch route to terminal.');
+    }
   }
 
   void getCurrentLocation() async {
@@ -167,6 +194,31 @@ class _LocationPageState extends State<LocationPage> {
                         accuracy: 10.0,
                       ),
                     ),
+                    if(terminalLocation != null)
+                      MarkerLayer(
+                          markers: [
+                            Marker(
+                                point: terminalLocation!,
+                                width: 30,
+                                height: 30,
+                                child: const Icon(
+                                    Icons.location_pin,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                            ),
+                          ],
+                      ),
+                    if(routePoints.isNotEmpty)
+                      PolylineLayer(
+                          polylines: [
+                            Polyline(
+                                points: routePoints,
+                              strokeWidth: 4.0,
+                              color: Colors.blue
+                            )
+                          ]
+                      )
                   ],
                 ),
               ],
